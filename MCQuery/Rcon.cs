@@ -42,7 +42,7 @@ namespace MCQuery
 
             byte[] response = SendByTcp(base.Address, base.Port, message.ToArray());
 
-            foreach (byte item in response)
+            foreach (byte item in BitConverter.GetBytes(response.Length))
             {
                 if (reminder[0] == item)
                 {
@@ -69,7 +69,7 @@ namespace MCQuery
             byte[] response = SendByTcp(base.Address, base.Port, message.ToArray());
             bool didSucceeed = false;
 
-            foreach (byte item in response)
+            foreach (byte item in BitConverter.GetBytes(response.Length))
             {
                 if (reminder[0] == item)
                 {

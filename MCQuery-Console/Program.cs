@@ -7,13 +7,14 @@ namespace MCQuery
     {
         static void Main(string[] args)
         {
-//            Console.WriteLine("Server IP Address: ");
-//            string ipAddress = Console.ReadLine();
-//
-//            Console.WriteLine("Server Port: ");
-//            string portString = Console.ReadLine();
-            string ipAddress = "192.168.0.7";
-            string portString = "25575";
+            string ipAddress = "localhost";
+            string portString = "25565";
+            
+            if (args.Length != 0)
+            {
+                ipAddress = args[0];
+                portString = args[1];
+            }
 
             int.TryParse(portString, out int port);
 
@@ -29,27 +30,28 @@ namespace MCQuery
                 //Query serverQuery = new Query(ipAddress, port);
 				//Server basicServer = serverQuery.GetBasicServerInfo();
                 //serverQuery.Close();
-                Rcon rconServer = new Rcon(ipAddress, port, "yolo");
-                rconServer.Login();
-//                string test = rconServer.Address;
-//                Query query = new Query(ipAddress, port);
-//                Console.WriteLine(query.IsConnected);
-//
-//                Server server = query.GetFullServerInfo();
-//                Console.WriteLine(server.Address);
-//                Console.WriteLine(server.GameType);
-//                Console.WriteLine(server.Map);
-//                Console.WriteLine(server.MaxPlayers);
-//                Console.WriteLine(server.Motd);
-//                Console.WriteLine(server.Port);
-//                Console.WriteLine(server.Version);
+                
+                Query query = new Query(ipAddress, port);
+                Console.WriteLine(query.IsConnected);
+                ServerInfo serverInfo = query.GetFullServerInfo();
+                Console.WriteLine(serverInfo.Address);
+                Console.WriteLine(serverInfo.GameType);
+                Console.WriteLine(serverInfo.Map);
+                Console.WriteLine(serverInfo.MaxPlayers);
+                Console.WriteLine(serverInfo.Motd);
+                Console.WriteLine(serverInfo.Port);
+                Console.WriteLine(serverInfo.Version);
 
-                while (true)
-                {
-                    Console.WriteLine("Wpisz komende: ");
-                    string input = Console.ReadLine();
-                    rconServer.SendCommand(input);
-                }
+                
+                // Rcon rconServer = new Rcon(ipAddress, port, "yolo");
+                // rconServer.Login();
+                // string test = rconServer.Address;
+                // while (true)
+                // {
+                //     Console.WriteLine("Wpisz komende: ");
+                //     string input = Console.ReadLine();
+                //     rconServer.SendCommand(input);
+                // }
 
                 //Console.WriteLine("Printing out server info: ");
                 //Console.WriteLine("Server MOTD: {0}", basicServer.Motd);
@@ -58,8 +60,8 @@ namespace MCQuery
                 //Console.WriteLine("Server Player Count: {0}", basicServer.PlayerCount);
                 //Console.WriteLine("Server Max Players: {0}", basicServer.MaxPlayers);
                 //Console.WriteLine("Server Status: {0}", basicServer.IsOnline);
-
             }
+            
             else
             {
                 Console.WriteLine("Wrong port number!");

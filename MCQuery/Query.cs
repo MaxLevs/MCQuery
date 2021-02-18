@@ -95,7 +95,7 @@ namespace MCQuery
 		    return udpResponse;
 		}
 
-		public Server GetBasicServerInfo()
+		public ServerInfo GetBasicServerInfo()
 		{
 			byte[] responseData = GetBasicStat(base.Address, base.Port);
 
@@ -119,7 +119,7 @@ namespace MCQuery
 					informations[5] = informations[5].Substring(2);
 				}
 
-				Server server = new Server(true)
+				ServerInfo serverInfo = new ServerInfo(true)
 				{
 					Motd = informations[0],
 					GameType = informations[1],
@@ -130,36 +130,37 @@ namespace MCQuery
 					Port = informations[6] //TODO: Port is currently missing... It needs to be fixed.
 				};
 
-				return server;
+				return serverInfo;
 			}
 
 			return null;
 		}
 
-		public Server GetFullServerInfo()
+		public ServerInfo GetFullServerInfo()
 		{
 			byte[] responseData = GetFullStat(base.Address, base.Port);
 
 			if (responseData.Length != 0)
 			{
-				//Skip first 11 bytes 
+				//Skip first 1 + 4 + 11 bytes 
 				responseData = responseData.Skip(16).ToArray();
 
 				string stringData = Encoding.ASCII.GetString(responseData);
 
 				//This array should contain an array with server informations and an array with playernames
-				string[] informations = stringData.Split(new string[] { "player_" }, StringSplitOptions.None);
+				string[] informations = stringData.Split(new[] {"player_\0\0"}, StringSplitOptions.None);
 
-				string[] serverInfo = informations[0].Split(new string[] { "\0" }, StringSplitOptions.None);
-				string[] playerList = informations[1].Split(new string[] { "\0" }, StringSplitOptions.None);
+				string[] serverInfoArr = informations[0].Split(new[] { "\0" }, StringSplitOptions.None);
+				string[] playerList = informations[1].Split(new[] { "\0" }, StringSplitOptions.None)
+					.Where(s => !string.IsNullOrEmpty(s)).ToArray();
 
 				//Split serverInfo to key - value pair.
 
 				Dictionary<string, string> serverDict = new Dictionary<string, string>();
 
-				for (int i = 0; i < serverInfo.Length; i += 2)
+				for (int i = 0; i < serverInfoArr.Length; i += 2)
 				{
-					serverDict.Add(serverInfo[i], serverInfo[i + 1]);
+					serverDict.Add(serverInfoArr[i], serverInfoArr[i + 1]);
 				}
 
 				//0 = MOTD
@@ -170,20 +171,21 @@ namespace MCQuery
 				//5 = Host Port
 				//6 = Host IP
 
-				Server server = new Server(true)
+				ServerInfo serverInfo = new ServerInfo(true)
 				{
 					Motd = serverDict["hostname"],
 					GameType = serverDict["gametype"],
 					Map = serverDict["map"],
 					PlayerCount = int.Parse(serverDict["numplayers"]),
 					MaxPlayers = int.Parse(serverDict["maxplayers"]),
+					PlayerList =  playerList,
 					Plugins = serverDict["plugins"],
 					Address = serverDict["hostip"],
-					Port = serverDict["hostport"], //TODO: Port is currently missing... It needs to be fixed.
+					Port = serverDict["hostport"],
 					Version = serverDict["version"]
 				};
 
-				return server;
+				return serverInfo;
 			}
 
 			return null;
@@ -195,26 +197,21 @@ namespace MCQuery
 			//Index 1 - 4 = SessionId
 			//Index 5 and further is a challenge token which we need to extract.
 
-			//byte[] challengeToken = new byte[message.Length - 5];
-
-			string response = "";
-
-			for (int i = 0; i < message.Length; i++)
-			{
-				if (i >= 5)
-				{
-					byte item = message[i];
-					response += Encoding.ASCII.GetString(new[] { item });
-				}
-			}
+			string response = Encoding.ASCII.GetString(message, 5, message.Length - 5);
 			Int32 tokenInt32 = Int32.Parse(response);
 
-			byte[] challenge = {
-				(byte)(tokenInt32 >> 24 & 0xFF),
-				(byte)(tokenInt32 >> 16 & 0xFF),
-				(byte)(tokenInt32 >> 8 & 0xFF),
-				(byte)(tokenInt32 >> 0 & 0xFF)
-			};
+			// byte[] challenge = {
+			// 	(byte)(tokenInt32 >> 24 & 0xFF),
+			// 	(byte)(tokenInt32 >> 16 & 0xFF),
+			// 	(byte)(tokenInt32 >> 8 & 0xFF),
+			// 	(byte)(tokenInt32 >> 0 & 0xFF)
+			// };
+			
+			byte[] challenge = BitConverter.GetBytes(tokenInt32);
+			if (BitConverter.IsLittleEndian)
+			{
+				challenge = challenge.Reverse().ToArray();
+			}
 
 			return challenge;
 		}
@@ -225,7 +222,7 @@ namespace MCQuery
 			Handshake(base.Address, base.Port);
 		}
 
-	    public override bool IsConnected => _challengeToken != null || _challengeToken.Length > 0;
+	    public override bool IsConnected => _challengeToken != null && _challengeToken.Length > 0;
 
         
 	}

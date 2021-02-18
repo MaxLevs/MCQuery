@@ -105,7 +105,11 @@ namespace MCQuery
                 networkStream.Write(data, 0, data.Length);
                 int byteCount = networkStream.Read(buffer, 0, buffer.Length);
 
-                return BitConverter.GetBytes(byteCount);
+                // return BitConverter.GetBytes(byteCount); // ?? What??
+
+                var res = new byte[byteCount];
+                Buffer.BlockCopy(buffer, 0, res, 0, byteCount);
+                return res;
             }
             catch (SocketException exception)
             {

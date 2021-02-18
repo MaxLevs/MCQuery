@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace MCQuery
 {
-    public class Server
+    public class ServerInfo
     {
         public string Address { get; set; }
         public string Port { get; set; }
@@ -19,10 +19,11 @@ namespace MCQuery
 
         public int PlayerCount { get; set; }
         public int MaxPlayers { get; set; }
+        public string[] PlayerList { get; set; }
 
         public bool IsOnline { get; set; }
 
-        public Server(bool isOnline)
+        public ServerInfo(bool isOnline)
         {
             IsOnline = isOnline;
         }
